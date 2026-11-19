@@ -3,7 +3,6 @@
 A lightweight, cross-platform [CHIP-8](https://en.wikipedia.org/wiki/CHIP-8) interpreter written in modern C++ (C++17/C++20) using SDL2 for graphics, input, and audio. Built from scratch to explore low-level computer architecture, fetch-decode-execute cycles, and hardware emulation.
 
 ![Gameplay Demo](assets/demo.gif)
-*(Tip: Replace this with a short GIF of Pong, Space Invaders, or Tetris running on your build!)*
 
 ## Features
 
