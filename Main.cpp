@@ -1,53 +1,63 @@
+#include <cstdint>
+#include <cstring>
+#include <fstream>
 #include <iostream>
-#include <SDL.h>
-using namespace std;
 
-int main(int argc, char** argv) {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "SDL Initialization Failed: " << SDL_GetError() << "\n";
-        return 1;
+class Chip8 {
+public:
+    uint8_t  memory[4096];
+    uint8_t  V[16];
+    uint16_t I;
+    uint16_t pc;
+
+    uint16_t stack[16];
+    uint8_t  sp;
+
+    uint8_t  gfx[64 * 32];
+    uint8_t  delay_timer;
+    uint8_t  sound_timer;
+    uint8_t  key[16];
+    bool     draw_flag;
+
+    Chip8() {
+        initialize();
     }
-    
-    SDL_Window *window = SDL_CreateWindow(
-        "CHIP-8 Test Window", 
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
-        800, 600, 
-        SDL_WINDOW_SHOWN
-    );
-    
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    
-    bool running = true;
-    SDL_Event event;
-    Uint32 startTime = SDL_GetTicks(); // 15-second timer tracker
 
-    // Active frame loop
-    while (running) {
-        // 1. Continuously pump window events so Windows knows the app is alive
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                running = false; // Closes when you click the 'X'
-            }
+    void initialize() {
+        pc          = 0x200; // ROM execution starts at 0x200
+        I           = 0;
+        sp          = 0;
+        delay_timer = 0;
+        sound_timer = 0;
+        draw_flag   = true;
+
+        std::memset(memory, 0, sizeof(memory));
+        std::memset(V, 0, sizeof(V));
+        std::memset(stack, 0, sizeof(stack));
+        std::memset(gfx, 0, sizeof(gfx));
+        std::memset(key, 0, sizeof(key));
+
+        // Load standard 80-byte fontset (16 chars * 5 bytes) at 0x050
+        constexpr uint8_t fontset[80] = {
+            0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+            0x20, 0x60, 0x20, 0x20, 0x70, // 1
+            0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+            0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+            0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+            0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+            0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+            0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+            0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+            0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+            0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+            0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+            0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+            0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+            0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+            0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+        };
+
+        for (int i = 0; i < 80; ++i) {
+            memory[0x050 + i] = fontset[i];
         }
-
-        // Auto-close after 15 seconds (you can remove this later)
-        if (SDL_GetTicks() - startTime > 15000) {
-            running = false;
-        }
-
-        // 2. Render every frame so Windows DWM sees active updates
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red color
-        SDL_RenderClear(renderer); 
-        SDL_RenderPresent(renderer);
-
-        // 3. Cap frame rate to ~60 FPS (approx 16ms delay) so CPU doesn't spike
-        SDL_Delay(16);
     }
-    
-    // Clean up resources cleanly
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    
-    return 0;
-}
