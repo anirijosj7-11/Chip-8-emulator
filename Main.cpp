@@ -61,3 +61,35 @@ public:
             memory[0x050 + i] = fontset[i];
         }
     }
+    bool loadROM(const char* filename) {
+        initialize(); // Start with a clean state
+
+        std::ifstream file(filename, std::ios::binary | std::ios::ate);
+        if (!file.is_open()) {
+            std::cerr << "[ERROR] Failed to open ROM: " << filename << "\n";
+            return false;
+        }
+
+        std::streamsize size = file.tellg();
+        constexpr std::streamsize max_rom_size = 4096 - 0x200; // 3584 bytes
+
+        if (size <= 0) {
+            std::cerr << "[ERROR] ROM file is empty.\n";
+            return false;
+        }
+        if (size > max_rom_size) {
+            std::cerr << "[ERROR] ROM too large (" << size
+                      << " bytes). Max allowed: " << max_rom_size << " bytes.\n";
+            return false;
+        }
+
+        file.seekg(0, std::ios::beg);
+        if (!file.read(reinterpret_cast<char*>(&memory[0x200]), size)) {
+            std::cerr << "[ERROR] Failed while reading ROM bytes.\n";
+            return false;
+        }
+
+        std::cout << "[INFO] Loaded " << size << " bytes into memory at 0x200.\n";
+        return true;
+    }
+};
